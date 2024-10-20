@@ -1,20 +1,21 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import 'reflect-metadata';
 
 @Entity()
 export class Task {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;  // Using '!' to indicate that this will be assigned by TypeORM
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ nullable: true })
-  description: string;
+  description?: string;
 
   @Column({ default: false })
-  completed: boolean;
+  completed!: boolean;
 
   @Column({ type: 'datetime', nullable: true })
-  deadline: Date;
+  deadline?: Date;
 }
 
