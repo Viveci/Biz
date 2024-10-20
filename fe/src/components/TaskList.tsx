@@ -1,13 +1,15 @@
+// src/components/TaskList.tsx
 import React, { useEffect, useState } from 'react';
 import { getTasks, deleteTask, updateTask } from '../services/taskService';
 import TaskForm from './TaskForm';
+import { Task } from '../types/Task';  // Import the Task interface
 
 const TaskList: React.FC = () => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);  // Explicitly type tasks as an array of Task objects
 
   useEffect(() => {
     const loadTasks = async () => {
-      const data = await getTasks();
+      const data: Task[] = await getTasks();  // Ensure getTasks returns Task[]
       setTasks(data);
     };
     loadTasks();
@@ -15,19 +17,19 @@ const TaskList: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     await deleteTask(id);
-    setTasks(tasks.filter(task => task.id !== id));
+    setTasks(tasks.filter(task => task.id !== id));  // Now TypeScript knows task has an id
   };
 
-  const handleToggleCompleted = async (task: any) => {
+  const handleToggleCompleted = async (task: Task) => {
     const updatedTask = { ...task, completed: !task.completed };
     await updateTask(task.id, updatedTask);
     setTasks(tasks.map(t => (t.id === task.id ? updatedTask : t)));
   };
 
-  const handleSaveTask = async (updatedTask: any) => {
+  const handleSaveTask = async (updatedTask: Task) => {
     await updateTask(updatedTask.id, updatedTask);
-    const data = await getTasks();
-    setTasks(data);  // Refresh tasks after saving
+    const data: Task[] = await getTasks();  // Reload tasks after saving
+    setTasks(data);
   };
 
   return (
@@ -41,13 +43,14 @@ const TaskList: React.FC = () => {
               <p>{task.description}</p>
               <p>
                 Completed:{" "}
-                <span
-                  className={task.completed ? "text-green-500" : "text-red-500"}
-                >
+                <span className={task.completed ? "text-green-500" : "text-red-500"}>
                   {task.completed ? "Yes" : "No"}
                 </span>
               </p>
-              <p>Deadline: {new Date(task.deadline).toLocaleString()}</p>
+              <p>
+                Deadline: {task.deadline ? new Date(task.deadline).toLocaleString() : "No deadline set"}
+              </p>
+
             </div>
             <div>
               <button
