@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
-import { createTask, updateTask } from '../services/taskService';
+import { createTask } from '../services/taskService';
 
 interface TaskFormProps {
-  onSave: (task: any) => void;
-  task?: any;  // If updating, pass in the task to edit
+  onSave: () => void;  // Ensure the onSave prop is correctly defined
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onSave, task }) => {
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [completed, setCompleted] = useState(task?.completed || false);
-  const [deadline, setDeadline] = useState(task?.deadline || '');
+const TaskForm: React.FC<TaskFormProps> = ({ onSave }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [completed, setCompleted] = useState(false);
+  const [deadline, setDeadline] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedTask = { title, description, completed, deadline };
-    onSave(updatedTask);  // Save the new or updated task
+
+    const newTask = {
+      title,
+      description,
+      completed,
+      deadline: deadline ? new Date(deadline).toISOString() : undefined,
+    };
+
+    try {
+      await createTask(newTask);  // API call to create a new task
+      onSave();  // Trigger parent action after save (like refreshing task list)
+      setTitle('');  // Reset form fields after successful save
+      setDescription('');
+      setCompleted(false);
+      setDeadline('');
+    } catch (error) {
+      console.error('Failed to save task:', error);
+    }
   };
 
   return (
@@ -32,7 +47,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSave, task }) => {
         onChange={e => setDescription(e.target.value)}
         placeholder="Description"
         className="border p-2 w-full"
-      ></textarea>
+      />
       <label className="block">
         <input
           type="checkbox"

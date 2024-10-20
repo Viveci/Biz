@@ -1,67 +1,73 @@
 // src/components/TaskList.tsx
 import React, { useEffect, useState } from 'react';
 import { getTasks, deleteTask, updateTask } from '../services/taskService';
-import TaskForm from './TaskForm';
 import { Task } from '../types/Task';  // Import the Task interface
 
-const TaskList: React.FC = () => {
+interface TaskListProps {
+  refresh: boolean;  // Add the refresh prop
+}
+
+const TaskList: React.FC<TaskListProps> = ({ refresh }) => {
   const [tasks, setTasks] = useState<Task[]>([]);  // Explicitly type tasks as an array of Task objects
 
+  // Fetch tasks whenever the component mounts or the refresh prop changes
   useEffect(() => {
     const loadTasks = async () => {
-      const data: Task[] = await getTasks();  // Ensure getTasks returns Task[]
+      const data: Task[] = await getTasks();
       setTasks(data);
     };
     loadTasks();
-  }, []);
+  }, [refresh]);  // Reload tasks when the refresh prop changes
 
-  const handleDelete = async (id: number) => {
-    await deleteTask(id);
-    setTasks(tasks.filter(task => task.id !== id));  // Now TypeScript knows task has an id
+const handleDelete = async (id: number | undefined) => {
+  if (id === undefined) {
+    console.error("Task ID is undefined");
+    return;  // Exit early if there's no ID
+  }
+
+    await deleteTask(id);  // Call API to delete the task
+    setTasks(tasks.filter(task => task.id !== id));  // Update state to remove the task
   };
 
   const handleToggleCompleted = async (task: Task) => {
+    if (task.id === undefined) {
+        console.error("Task ID is undefined");
+        return;
+    }
+
     const updatedTask = { ...task, completed: !task.completed };
     await updateTask(task.id, updatedTask);
-    setTasks(tasks.map(t => (t.id === task.id ? updatedTask : t)));
-  };
-
-  const handleSaveTask = async (updatedTask: Task) => {
-    await updateTask(updatedTask.id, updatedTask);
-    const data: Task[] = await getTasks();  // Reload tasks after saving
-    setTasks(data);
+    setTasks(tasks.map(t => (t.id === task.id ? updatedTask : t)));  // Update state after update
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Task List</h2>
-      <ul>
+    <div className="w-full">
+      <h2 className="text-2xl font-bold mb-4">Your Tasks</h2>
+      <ul className="space-y-4">
         {tasks.map(task => (
-          <li key={task.id} className="border p-4 mb-2 rounded shadow-md flex justify-between">
+          <li key={task.id} className="bg-white border border-gray-300 p-4 rounded-lg shadow-md flex justify-between items-center">
             <div>
-              <h3 className="text-xl">{task.title}</h3>
-              <p>{task.description}</p>
-              <p>
-                Completed:{" "}
-                <span className={task.completed ? "text-green-500" : "text-red-500"}>
-                  {task.completed ? "Yes" : "No"}
-                </span>
+              <h3 className="text-lg font-semibold">{task.title}</h3>
+              <p className="text-gray-600">{task.description || "No description"}</p>
+              <p className={`text-sm mt-2 ${task.completed ? "text-green-600" : "text-red-600"}`}>
+                {task.completed ? "Completed" : "Incomplete"}
               </p>
-              <p>
-                Deadline: {task.deadline ? new Date(task.deadline).toLocaleString() : "No deadline set"}
-              </p>
-
+              {task.deadline && (
+                <p className="text-gray-500 text-xs mt-1">
+                  Deadline: {new Date(task.deadline).toLocaleString()}
+                </p>
+              )}
             </div>
-            <div>
+            <div className="space-x-2">
               <button
                 onClick={() => handleToggleCompleted(task)}
-                className="bg-yellow-500 text-white p-2 rounded mr-2"
+                className={`px-4 py-2 rounded text-white ${task.completed ? "bg-yellow-500" : "bg-green-500"}`}
               >
                 {task.completed ? "Mark Incomplete" : "Mark Complete"}
               </button>
               <button
                 onClick={() => handleDelete(task.id)}
-                className="bg-red-500 text-white p-2 rounded"
+                className="px-4 py-2 bg-red-500 text-white rounded"
               >
                 Delete
               </button>
@@ -69,8 +75,6 @@ const TaskList: React.FC = () => {
           </li>
         ))}
       </ul>
-      <h2 className="text-2xl font-bold mt-4">Add/Edit Task</h2>
-      <TaskForm onSave={handleSaveTask} />
     </div>
   );
 };
