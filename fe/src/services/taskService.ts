@@ -8,7 +8,7 @@ export const getTasks = async (): Promise<Task[]> => {
   return response.data;
 };
 
-export const createTask = async (task: Task): Promise<Task> => {
+export const createTask = async (task: Partial<Task>): Promise<Task> => {
   const response = await axios.post(API_URL, task);
   return response.data;
 };
